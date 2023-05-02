@@ -3,11 +3,11 @@ from pathlib import Path
 
 
 def imread(filename):
-    if Path(filename).suffix in {'.tif', '.tiff'}:
+    if Path(filename).suffix.lower() in {'.tif', '.tiff'}:
         return tifffile.imread(filename)
         
 def imwrite(filename, arr):
-    if Path(filename).suffix in {'.tif', '.tiff'}:
+    if Path(filename).suffix.lower() in {'.tif', '.tiff'}:
         tifffile.imsave(filename, arr) 
         
         
