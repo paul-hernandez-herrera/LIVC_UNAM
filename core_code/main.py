@@ -34,7 +34,7 @@ def create_stack_time_series_from_piezoelectric_info(input_path, input_txt, fold
     
     loc = np.sort(np.concatenate((local_minimum, local_maximum)))
     
-    z_stack_size = stats.mode(np.diff(loc),keepdims=False)[0]
+    z_stack_size = stats.mode(np.diff(loc),keepdims=False)[0] +1
     
     info = {}
     tp = 0
