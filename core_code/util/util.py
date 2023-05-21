@@ -1,10 +1,14 @@
 import tifffile
 from pathlib import Path
-
+import skimage.io as io
+import pandas as pd
+import numpy as np
 
 def imread(filename):
     if Path(filename).suffix.lower() in {'.tif', '.tiff'}:
         return tifffile.imread(filename)
+    if Path(filename).suffix.lower() in {'.mhd'}:
+        return io.imread(filename, plugin='simpleitk')
         
 def imwrite(filename, arr):
     if Path(filename).suffix.lower() in {'.tif', '.tiff'}:
@@ -27,6 +31,9 @@ def get_image_file_paths(input_path):
         raise ValueError("No .tiff or .tif files found in the given path.")
         
     return img_file_paths    
+
+def read_swc(file_path,file_name):
+    return np.array(pd.read_csv(Path(file_path) / file_name, header = None, comment='#', delim_whitespace = True))
 
 def create_file_in_case_not_exist(folder_path):
     folder_path.mkdir(parents=True, exist_ok=True)
