@@ -36,6 +36,19 @@ def preprocess_stack(img3D):
 
     return img3D
 
+def crop_subvolumes_2D(img, left_upper_corner, v_size):
+    v_size = np.int_(v_size)
+       
+    # check good boundary conditions
+    img_shape = img.shape
+    left_upper_corner = np.maximum(np.int_(left_upper_corner), 0)
+    left_upper_corner = np.minimum(left_upper_corner, img_shape - v_size)     
+            
+    img_cropped = img[left_upper_corner[0]:left_upper_corner[0]+v_size, left_upper_corner[1]:left_upper_corner[1]+v_size]
+    
+    return img_cropped
+
+
 class Dataset_spermNeck():
     def __init__(self, csv_file_path):
         dataFrame = pd.read_csv(csv_file_path)
