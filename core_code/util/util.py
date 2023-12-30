@@ -35,6 +35,10 @@ def get_image_file_paths(input_path):
 def read_swc(file_path,file_name):
     return np.array(pd.read_csv(Path(file_path, file_name) , header = None, comment='#', delim_whitespace = True))
 
+def write_csv(file_name, array):
+    df = pd.DataFrame(array)
+    df.to_csv(file_name, index=False)
+
 def create_file_in_case_not_exist(folder_path):
     folder_path.mkdir(parents=True, exist_ok=True)
     return
