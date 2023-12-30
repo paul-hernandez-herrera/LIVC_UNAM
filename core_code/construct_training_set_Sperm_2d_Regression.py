@@ -5,7 +5,7 @@ from .util import util
 import csv
 from tqdm import tqdm
 
-def create_training_set(csv_file_path, folder_output, img_size = 256, n = 3):
+def create_training_set(csv_file_path, folder_output, img_size = 128, n = 3):
     #read pandas data frame
     dataset = Dataset_spermNeck(csv_file_path)
 
@@ -15,9 +15,19 @@ def create_training_set(csv_file_path, folder_output, img_size = 256, n = 3):
         img3D, swc = util.imread(path_img), util.read_swc(path_swc.parent, path_swc.name)
 
         img2D = preprocess_stack(img3D)
+        
+        neck_point = np.array([swc[0,3], swc[0,2]])
+        #generate training set random position [-32,32]
+        for j in range(n-1):
+            random_displacement = np.random.randint(low = -32, high=32, size=(1,2), dtype=int)
+            left_upper_corner = neck_point - (img_size//2) + random_displacement
 
-        util.imwrite(Path(folder_output, str(i) + ".tif"), img2D)
+            img_cropped, left_upper_corner = crop_subvolumes_2D(img2D, left_upper_corner, img_size)
 
+            file_name_base = Path(folder_output, str(i))
+            util.write_csv(file_name_base.with_suffix(".csv"), neck_point-left_upper_corner)
+            util.imwrite(file_name_base.with_suffix(".tif"), img_cropped)    
+            
 
 def preprocess_stack(img3D):
     # We assume that image shape is [Depth, Width, Height]
@@ -25,7 +35,6 @@ def preprocess_stack(img3D):
     # percentile normalization
     low = np.percentile(img3D[:], 0.01)
     high = np.percentile(img3D[:], 99.99)
-    print(f"{low} --- {high}")
     img3D = np.clip(img3D, low, high)
 
     # zero mean and one varianza
@@ -44,9 +53,9 @@ def crop_subvolumes_2D(img, left_upper_corner, v_size):
     left_upper_corner = np.maximum(np.int_(left_upper_corner), 0)
     left_upper_corner = np.minimum(left_upper_corner, img_shape - v_size)     
             
-    img_cropped = img[left_upper_corner[0]:left_upper_corner[0]+v_size, left_upper_corner[1]:left_upper_corner[1]+v_size]
+    img_cropped = img[left_upper_corner[0,0]:left_upper_corner[0,0]+v_size, left_upper_corner[0,1]:left_upper_corner[0,1]+v_size]
     
-    return img_cropped
+    return img_cropped, left_upper_corner
 
 
 class Dataset_spermNeck():
