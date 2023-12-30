@@ -33,7 +33,7 @@ def get_image_file_paths(input_path):
     return img_file_paths    
 
 def read_swc(file_path,file_name):
-    return np.array(pd.read_csv(Path(file_path) / file_name, header = None, comment='#', delim_whitespace = True))
+    return np.array(pd.read_csv(Path(file_path, file_name) , header = None, comment='#', delim_whitespace = True))
 
 def create_file_in_case_not_exist(folder_path):
     folder_path.mkdir(parents=True, exist_ok=True)
