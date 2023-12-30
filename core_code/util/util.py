@@ -37,7 +37,7 @@ def read_swc(file_path,file_name):
 
 def write_csv(file_name, array):
     df = pd.DataFrame(array)
-    df.to_csv(file_name, index=False)
+    df.to_csv(file_name, index=False, header = None)
 
 def create_file_in_case_not_exist(folder_path):
     folder_path.mkdir(parents=True, exist_ok=True)
