@@ -7,7 +7,9 @@ def create_training_set(csv_file_path, folder_output, img_size = 128, n = 3):
     #read pandas data frame
     dataset = Dataset_spermNeck(csv_file_path)
 
+    count = 0
     for i in range(len(dataset)):
+        print(f"Running folder {i+1}/{len(dataset)}")
         path_img, path_swc = dataset.__getitem__(i)
 
         img3D, swc = util.imread(path_img), util.read_swc(path_swc.parent, path_swc.name)
@@ -16,15 +18,20 @@ def create_training_set(csv_file_path, folder_output, img_size = 128, n = 3):
         
         neck_point = np.array([swc[0,3], swc[0,2]])
         #generate training set random position [-32,32]
-        for j in range(n-1):
+        for j in range(n):
             random_displacement = np.random.randint(low = -32, high=32, size=(1,2), dtype=int)
+            #random_displacement *= 0 if j == 0 else 1  # If j == 0, set displacement to 0
+
             left_upper_corner = neck_point - (img_size//2) + random_displacement
 
             img_cropped, left_upper_corner = crop_subvolumes_2D(img2D, left_upper_corner, img_size)
 
-            file_name_base = Path(folder_output, str(i))
+            file_name_base = Path(folder_output, str(count))
+            
             util.write_csv(file_name_base.with_suffix(".csv"), neck_point-left_upper_corner)
             util.imwrite(file_name_base.with_suffix(".tif"), img_cropped)    
+
+            count +=1
 
 
 def preprocess_stack(img3D):
