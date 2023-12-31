@@ -135,3 +135,31 @@ def set_parameters_construct_training_set_tubular_structure_from_swc(obj):
                   'folder_output_default': folder_output_default}
     
     return parameters  
+
+################################################################################        
+     
+
+            
+def parameters_training_set_Regresion2D_Neck_point():
+    print('------------------------------')
+    print('\033[47m' '\033[1m' 'REQUIRED PARAMETERS' '\033[0m')
+    print('------------------------------')
+
+    csv_path_w = ipwidget_basic.set_text('CSV path:', 'Insert path here')   
+
+    print('------------------------------')
+    print('\033[47m' '\033[1m' 'OPTIONAL PARAMETERS' '\033[0m')
+    print('------------------------------')
+    
+    folder_output_default = 'Default: "Path csv"/training_set_DATE/'
+    folder_output_path_w = ipwidget_basic.set_text('Folder output:', folder_output_default)
+    patch_size_img_w = ipwidget_basic.set_Int('Patch size (length x length): ', 128)
+    number_patches_random_w = ipwidget_basic.set_Int('# sub-images random pos: ', 3)
+
+    parameters = {'csv_path' : csv_path_w,
+                  'patch_size_img': patch_size_img_w,
+                  'number_patches_random': number_patches_random_w,
+                  'folder_output_path': folder_output_path_w,
+                  'folder_output_default': folder_output_default}
+    
+    return parameters  
