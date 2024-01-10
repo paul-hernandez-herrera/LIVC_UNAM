@@ -1,6 +1,7 @@
 import numpy as np
 from pathlib import Path
 import pandas as pd
+from scipy.ndimage import gaussian_filter
 from .util import util
 
 def create_training_set(csv_file_path, folder_output, img_size = 128, n = 3):
@@ -19,7 +20,7 @@ def create_training_set(csv_file_path, folder_output, img_size = 128, n = 3):
         neck_point = np.array([swc[0,3], swc[0,2]])
         #generate training set random position [-32,32]
         for j in range(n):
-            random_displacement = np.random.randint(low = -32, high=32, size=(1,2), dtype=int)
+            random_displacement = np.random.randint(low = -40, high=40, size=(1,2), dtype=int)
             #random_displacement *= 0 if j == 0 else 1  # If j == 0, set displacement to 0
 
             left_upper_corner = neck_point - (img_size//2) + random_displacement
@@ -27,9 +28,11 @@ def create_training_set(csv_file_path, folder_output, img_size = 128, n = 3):
             img_cropped, left_upper_corner = crop_subvolumes_2D(img2D, left_upper_corner, img_size)
 
             file_name_base = Path(folder_output, str(count))
+
+            target_pos = neck_point-left_upper_corner
             
-            util.write_csv(file_name_base.with_suffix(".csv"), neck_point-left_upper_corner)
-            util.imwrite(file_name_base.with_suffix(".tif"), img_cropped)    
+            util.write_csv(file_name_base.with_suffix(".csv"), target_pos[:,::-1])
+            util.imwrite(file_name_base.with_suffix(".tif"), img_cropped)   
 
             count +=1
 
@@ -37,18 +40,18 @@ def create_training_set(csv_file_path, folder_output, img_size = 128, n = 3):
 def preprocess_stack(img3D):
     # We assume that image shape is [Depth, Width, Height]
 
-    # percentile normalization
-    low = np.percentile(img3D[:], 0.01)
-    high = np.percentile(img3D[:], 99.99)
+    # remove background and higher outliers
+    low = np.mean(img3D[img3D>0])
+    high = np.percentile(img3D[img3D>0], 99.99)
     img3D = np.clip(img3D, low, high)
 
-    # zero mean and one varianza
-    img3D = (img3D - np.mean(img3D[:])) / np.std(img3D[:])
+    # normalize 3D stack to interva [0, 1]
+    img3D = (img3D - low) / (high-low)
 
     # maximum intensity projection
-    img3D = np.max(img3D, axis=0)
+    img2D = np.max(img3D, axis=0)
 
-    return img3D
+    return img2D
 
 def crop_subvolumes_2D(img, left_upper_corner, v_size):
     v_size = np.int_(v_size)
@@ -92,10 +95,11 @@ class Dataset_spermNeck():
         file_ID, num_stack = file_name[0:n1], int(file_name[n1+3:n2])
 
         for num_digits in [3, 4]:
-            image_file_name = f"{file_ID}_TP{num_stack:0{num_digits}}"
-            image_path_mhd, image_path_tif = Path(folder_image, image_file_name + ".mhd"), Path(folder_image, image_file_name + ".tif")
-            
-            if image_path_mhd.is_file() or image_path_tif.is_file():
-                return image_path_mhd if image_path_mhd.is_file() else image_path_tif
+            for ID in {"_DC", ""}:
+                image_file_name = f"{file_ID}_TP{num_stack:0{num_digits}}{ID}"
+                image_path_mhd, image_path_tif = Path(folder_image, image_file_name + ".mhd"), Path(folder_image, image_file_name + ".tif")
+                
+                if image_path_mhd.is_file() or image_path_tif.is_file():
+                    return image_path_mhd if image_path_mhd.is_file() else image_path_tif
         
         raise Exception(f"{trace_path} does not have any associated image.")
