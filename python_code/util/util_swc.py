@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from basic_func import cummulative_euclidian_distance_between_points
 
 def read_swc(file_path,file_name):
     return np.array(pd.read_csv(Path(file_path, file_name) , header = None, comment='#', delim_whitespace = True))
@@ -18,13 +19,19 @@ def smooth_swc(swc, n_points = 0, interpolation_type = "linear"):
     
     points = swc[:,2:5]
     
-    if n_points == 0:
-        n_points = swc.shape[0]
+    n_points = n_points or swc.shape[0]
         
-    time = cummulative_euclidian_distance_between_points(points)
+    x = cummulative_euclidian_distance_between_points(points)
     
-    time_new = np.linspace(0, time[-1], num = n_points)
+    x_new = np.linspace(0, x[-1], num = n_points)
+    
+    new_points = np.zeros(n_points,3)
     if interpolation_type=="linear":
-        x_new = np.interp(time_new, time, points[:,0])
-        y_new = np.interp(time_new, time, points[:,1])
-        z_new = np.interp(time_new, time, points[:,2])
+        new_points[:,0] = np.interp(x_new, x, points[:,0])
+        new_points[:,1] = np.interp(x_new, x, points[:,1])
+        new_points[:,2] = np.interp(x_new, x, points[:,2])
+        
+    
+    swc = points_to_swc(new_points)
+        
+    return swc
