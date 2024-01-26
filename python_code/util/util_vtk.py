@@ -20,22 +20,18 @@ def swc_to_vtk_lines(file_output, swc):
         f.write('LINES {:d} {:d}\n'.format(conections.shape[0],3*conections.shape[0]))
         np.savetxt(f, conections, fmt="%i")
     
-def points_to_vectors(folder_path, file_name, positions, vectors):
-    
-    f = open(Path(folder_path) / (file_name + '.vtk'), 'w')
-    f.write('# vtk DataFile Version 2.0\n\n')
-    f.write('ASCII\n\n') 
-    
-    f.write('DATASET UNSTRUCTURED_GRID\n')
-    f.write('POINTS {} float\n'.format(positions.shape[0]))
-    np.savetxt(f, positions, fmt="%4.5f")
-    
-    f.write('POINT_DATA {}\n'.format(vectors.shape[0]))
-    f.write('VECTORS vectors_direction float\n')
-    np.savetxt(f, vectors, fmt="%4.5f")
-    
-    f.write('\nSCALARS colormap_ double\n')
-    f.write('LOOKUP_TABLE default\n')
-    np.savetxt(f,np.transpose( np.array(range(0,vectors.shape[0]))), fmt="%4.5f")
-    
-    f.close()
+def points_to_vectors(file_output, positions, vectors):
+    file_output = Path(file_output)
+    file_output = file_output if file_output.suffix == ".vtk" else file_output.with_suffix('.vtk')    
+    with open(file_output, 'w') as f:
+        f.write('# vtk DataFile Version 2.0\n\nASCII\n\n')
+        f.write('DATASET UNSTRUCTURED_GRID\n')
+        f.write('POINTS {} float\n'.format(positions.shape[0]))
+        np.savetxt(f, positions, fmt="%4.5f")
+        
+        f.write('POINT_DATA {}\n'.format(vectors.shape[0]))
+        f.write('VECTORS vectors_direction float\n')
+        np.savetxt(f, vectors, fmt="%4.5f")
+        
+        f.write('\nSCALARS colormap_ double\nLOOKUP_TABLE default\n')
+        np.savetxt(f, np.transpose(np.arange(vectors.shape[0])), fmt="%4.5f")
