@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from basic_func import cummulative_euclidian_distance_between_points
+from .basic_func import cummulative_euclidian_distance_between_points
 
 def read_swc(file_path,file_name):
     return np.array(pd.read_csv(Path(file_path, file_name) , header = None, comment='#', delim_whitespace = True))
