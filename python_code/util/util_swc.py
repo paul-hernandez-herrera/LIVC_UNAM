@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from .basic_func import cummulative_euclidian_distance_between_points, read_csv, write_csv
+from .basic_func import cummulative_euclidian_distance_between_points, read_csv
 
 def read_swc(file_path,file_name):
     full_path = Path(file_path, file_name)
@@ -75,6 +75,6 @@ def swc_to_micron(file_swc, file_txt, file_output = ""):
     output_path = Path(file_output) if Path(file_output).suffix == ".swc" else Path(file_output, file_swc.stem + "_micron.swc")
     
     if file_output:
-        write_csv(output_path, swc)      
+        write_swc(output_path, swc)      
     
     return swc
