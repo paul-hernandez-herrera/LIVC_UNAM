@@ -47,10 +47,10 @@ def swc_to_micron(file_swc, file_txt, file_output = ""):
     swc[:, 4] = np.clip(swc[:, 4], None, len(z_micron)) -1
     
     
-    swc[:, 4] = z_micron[swc[:, 4]]
+    swc[:, 4] = z_micron[swc[:, 4].astype(int)]
     swc[:, 2:4] = spacing_xy * swc[:, 2:4]
     
-    output_path = Path(file_output) if Path(file_output).suffix == ".vtk" else Path(file_output, file_swc.stem + ".vtk")
+    output_path = Path(file_output) if Path(file_output).suffix == ".swc" else Path(file_output, file_swc.stem + "_micron.swc")
     
     if file_output:
         write_csv(output_path, swc)      
