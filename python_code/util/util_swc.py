@@ -4,7 +4,20 @@ from pathlib import Path
 from .basic_func import cummulative_euclidian_distance_between_points, read_csv, write_csv
 
 def read_swc(file_path,file_name):
-    return np.array(pd.read_csv(Path(file_path, file_name) , header = None, comment='#', delim_whitespace = True))
+    full_path = Path(file_path, file_name)
+    
+    # Attempt to read the CSV file with a standard comma delimiter
+    swc = pd.read_csv(full_path , header = None).values
+    
+    # Check if the shape of the array is not [n, 7]
+    if swc.shape[1]!=7:
+        # If unsuccessful, attempt to read the CSV file with custom settings
+        swc = pd.read_csv(full_path , header = None, comment='#', delim_whitespace = True).values
+        
+        # Check if the shape is still not [n, 7]
+        if swc.shape[1]!=7:
+            raise Exception("Could not read SWC file. Check if the file exists and its shape is [n,7].")
+    return swc
 
 def points_to_swc(points):
     n_rows = points.shape[0]
