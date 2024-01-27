@@ -21,9 +21,6 @@ def imwrite(filename, arr):
     if Path(filename).suffix.lower() in {'.tif', '.tiff'}:
         tifffile.imsave(filename, arr) 
 
-def read_swc(file_path,file_name):
-    return np.array(pd.read_csv(Path(file_path, file_name) , header = None, comment='#', delim_whitespace = True))
-
 def read_csv(csv_dataset_file_path):
     #read pandas data frame
     pd_data = pd.read_csv(csv_dataset_file_path, header = None)
