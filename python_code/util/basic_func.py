@@ -32,6 +32,10 @@ def read_csv(csv_dataset_file_path):
 def write_csv(file_name, array):
     df = pd.DataFrame(array)
     df.to_csv(file_name, index=False, header = None)
+    
+def create_file_in_case_not_exist(folder_path):
+    Path(folder_path).mkdir(parents=True, exist_ok=True)
+    return
 
         
 
