@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from .basic_func import cummulative_euclidian_distance_between_points
+from .basic_func import cummulative_euclidian_distance_between_points, read_csv
 
 def read_swc(file_path,file_name):
     return np.array(pd.read_csv(Path(file_path, file_name) , header = None, comment='#', delim_whitespace = True))
@@ -34,4 +34,20 @@ def smooth_swc(swc, n_points = 0, interpolation_type = "linear"):
     
     swc = points_to_swc(new_points)
         
+    return swc
+
+def swc_to_micron(file_swc, file_txt, folder_output = None):
+    # function to convert swc file to micrometers
+    spacing_xy = 118/640    
+    file_swc = Path(file_swc)
+    
+    swc, z_micron = read_swc(file_swc.parent, file_swc.name), read_csv(file_txt).flatten()
+    
+    # we have to substract 1, because matlab index start at 1, while python at 0
+    swc[:, 4] = np.clip(swc[:, 4], None, len(z_micron)) -1
+    
+    
+    swc[:, 4] = z_micron[swc[:, 4]]
+    swc[:, 2:4] = spacing_xy * swc[:, 2:4]
+    
     return swc
