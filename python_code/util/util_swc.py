@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from .basic_func import cummulative_euclidian_distance_between_points, read_csv
+from .basic_func import cummulative_euclidian_distance_between_points, read_csv, write_csv
 
 def read_swc(file_path,file_name):
     return np.array(pd.read_csv(Path(file_path, file_name) , header = None, comment='#', delim_whitespace = True))
@@ -36,7 +36,7 @@ def smooth_swc(swc, n_points = 0, interpolation_type = "linear"):
         
     return swc
 
-def swc_to_micron(file_swc, file_txt, folder_output = None):
+def swc_to_micron(file_swc, file_txt, file_output = ""):
     # function to convert swc file to micrometers
     spacing_xy = 118/640    
     file_swc = Path(file_swc)
@@ -49,5 +49,10 @@ def swc_to_micron(file_swc, file_txt, folder_output = None):
     
     swc[:, 4] = z_micron[swc[:, 4]]
     swc[:, 2:4] = spacing_xy * swc[:, 2:4]
+    
+    output_path = Path(file_output) if Path(file_output).suffix == ".vtk" else Path(file_output, file_swc.stem + ".vtk")
+    
+    if file_output:
+        write_csv(output_path, swc)      
     
     return swc
