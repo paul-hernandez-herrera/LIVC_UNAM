@@ -19,6 +19,15 @@ def read_swc(file_path,file_name):
             raise Exception("Could not read SWC file. Check if the file exists and its shape is [n,7].")
     return swc
 
+def write_swc(file_name, array):
+    df = pd.DataFrame(array)
+    
+    df[0] = df[0].astype(int)
+    df[1] = df[1].astype(int)
+    df[6] = df[6].astype(int)
+    df.to_csv(file_name, index=False, header = None, float_format='%.4f')
+   
+
 def points_to_swc(points):
     n_rows = points.shape[0]
     swc = np.column_stack((np.arange(n_rows), np.zeros((n_rows, 5)), np.arange(n_rows)+1))
