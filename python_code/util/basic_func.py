@@ -37,6 +37,13 @@ def create_file_in_case_not_exist(folder_path):
     Path(folder_path).mkdir(parents=True, exist_ok=True)
     return
 
+def create_cell_array(shape):
+    shape = np.array(shape)
+    
+    n_entries = shape.prod()
+    temp = []
+    cell_array = np.array([temp.append([]) for _ in range(n_entries)], dtype=object).reshape(shape)
+    return cell_array
         
 
 
