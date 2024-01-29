@@ -42,4 +42,4 @@ variables_output = {"sperm_tp_analized": sperm_tp_analized,
                     "sperm_id": sperm_id
     }
 
-sio.savemat(Path(folder_output,  "01_Lab_Frame_High_Viscocity.mat"), variables_output)
+sio.savemat(Path(folder_output,  "01_Lab_Frame_High_Viscocity_raw.mat"), variables_output)
