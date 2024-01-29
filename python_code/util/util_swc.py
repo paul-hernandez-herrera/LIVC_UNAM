@@ -36,7 +36,7 @@ def points_to_swc(points):
     
     return swc
 
-def smooth_swc(swc, n_points = 0, interpolation_type = "linear"):
+def interpolate_swc(swc, n_points = 0, interpolation_type = "linear"):
     # function to convert any swc file to a fixed number of points
     
     points = swc[:,2:5]
