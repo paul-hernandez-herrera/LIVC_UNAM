@@ -30,8 +30,8 @@ def write_swc(file_name, array):
 
 def points_to_swc(points):
     n_rows = points.shape[0]
-    swc = np.column_stack((np.arange(n_rows), np.zeros((n_rows, 5)), np.arange(n_rows)+1))
-    swc[0, -1] = -1
+    swc = np.column_stack((np.arange(n_rows), np.zeros((n_rows, 5)), np.arange(n_rows)-1))
+    swc[0, 6] = -1
     swc[:, 2:5] = points
     
     return swc
@@ -47,7 +47,7 @@ def interpolate_swc(swc, n_points = 0, interpolation_type = "linear"):
     
     x_new = np.linspace(0, x[-1], num = n_points)
     
-    new_points = np.zeros(n_points,3)
+    new_points = np.zeros((n_points,3))
     if interpolation_type=="linear":
         new_points[:,0] = np.interp(x_new, x, points[:,0])
         new_points[:,1] = np.interp(x_new, x, points[:,1])
