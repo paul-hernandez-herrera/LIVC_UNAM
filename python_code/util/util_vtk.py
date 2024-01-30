@@ -3,10 +3,17 @@ import numpy as np
 
 def swc_to_vtk_lines(file_output, swc):
     swc = np.array(swc)
+
+    # make sure nodes id start at zero
+    I = swc[:,6] <= -1
+    swc[:,[0,6]] =  swc[:,[0,6]]-np.min(swc[:,0])
+    swc[I,1] = -1    
     
     points, conections = swc[:,2:5], swc[:,[0,6]]
     
-    conections = conections[conections[:,1]>-1,:] -1
+    # elliminate nodes without connection
+    conections =  np.delete(conections, np.where(conections[:,1] <= -1), axis = 0) 
+    
     conections = np.hstack((2*np.ones((conections.shape[0],1)),conections))
 
     file_output = Path(file_output)
