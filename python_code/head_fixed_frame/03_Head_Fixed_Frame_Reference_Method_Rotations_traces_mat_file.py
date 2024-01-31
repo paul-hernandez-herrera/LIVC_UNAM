@@ -4,13 +4,20 @@ Created on Sun May  2 19:34:39 2021
 
 @author: paul
 """
+import os
+from pathlib import Path
+# set current folder as the working directory
+workbook_dir = os.path.dirname(Path(__file__).parent.resolve())
+os.chdir(workbook_dir)
+
+
 import scipy.io as sio
 import numpy as np
-import Python_Scripts.util.data as data_module
-import Python_Scripts.util.util_vtk as util_vtk
+from util.basic_func import create_folder_in_case_not_exist, rodrigues_rotation
+from util.util_vtk import swc_to_vtk_lines
 from pathlib import Path
-from os import mkdir
 import sys
+from util.util_swc import points_to_swc
 
 
 def main(argv):
@@ -19,88 +26,82 @@ def main(argv):
     folder_root = r"C:\Users\jalip\Documentos\Proyectos\Sperm\Campo_claro\HIGH_VISCOCITY\data_traces"
     file_labFrame = Path(folder_root, "01_Lab_Frame_High_Viscocity_raw_fixed_n_points.mat")
     file_neck_frame = Path(folder_root, r"02_Neck_Frame_High_Viscocity_raw_fixed_n_points_5_um.mat")
-    folder_output = Path(folder_root, "03_Head_Fixed_Frame_High_Viscocity_raw_fixed_n_points_head_spin_by_drifraction.mat")
+    file_head_frame_output_name = Path(folder_root, "03_Head_Fixed_Frame_High_Viscocity_raw_fixed_n_points_head_spin_by_drifraction.mat")
     
+    # Create folder to save vtk files    
+    folder_root_vtk_output = Path(folder_root, "03_Head_Fixed_Frame")
+    create_folder_in_case_not_exist(folder_root_vtk_output)    
     
     #loading data from mat file
     variables_neck_frame = sio.loadmat(file_neck_frame)
     variables_lab_frame = sio.loadmat(file_labFrame)
     
-    if not(Path(folder_output).exists()):
-        mkdir(folder_output)
-    
-    for sp in range(0,variables_neck_frame['X'].shape[1]):
+    variables_neck_frame["head_spin_angle_cummulative"] = variables_neck_frame['head_spin_angle'].copy()
+    for sp in range(variables_neck_frame['X'].shape[1]):
         sperm_id = variables_neck_frame['sperm_id'][0,sp][0]
+        print(f"Running Sperm_id  {sperm_id}")        
+        folder_vtk_output = Path(folder_root_vtk_output, sperm_id)
+        create_folder_in_case_not_exist(folder_vtk_output)
         
-        file_output_data = Path(folder_output) / sperm_id
-        if not(file_output_data.exists()):
-            mkdir(file_output_data)
-                
-        #traces in Neck Fixed Frame for sperm sp using smoothing splines smoothing    
-        X = variables_neck_frame['X'][0, sp]
-        Y = variables_neck_frame['Y'][0, sp]
-        Z = variables_neck_frame['Z'][0, sp]
+        # traces in Neck Fixed Frame for sperm sp 
+        X_neck = variables_neck_frame['X'][0, sp]
+        Y_neck = variables_neck_frame['Y'][0, sp]
+        Z_neck = variables_neck_frame['Z'][0, sp]        
+        time_points = variables_neck_frame['sperm_tp_analized'][0,sp]
+        head_spin_angle = variables_neck_frame['head_spin_angle'][0, sp][0,:]
         
+        head_spin_angle_cummulative = convert_head_spin_from_range_0_90_to_full_rotations_0_360(head_spin_angle)
+        variables_neck_frame['head_spin_angle_cummulative'][0, sp][0,:] = head_spin_angle_cummulative
+        
+        # Reading Lab Frame to Detect Spin Rotation        
         X_lab = variables_lab_frame['X'][0, sp]
         Y_lab = variables_lab_frame['Y'][0, sp]
-        Z_lab = variables_lab_frame['Z'][0, sp]        
+        Z_lab = variables_lab_frame['Z'][0, sp]    
         
-        time_points = variables_neck_frame['sperm_timePointsAnalyzed'][0,sp]
-        head_spin_angle = variables_neck_frame['head_spin_angle'][0, sp][:,1]
-                
+        
         is_trajectory_clockwise = get_sperm_trayectory_direction(X_lab,Y_lab,Z_lab)
-        
-        #is_trajectory_clockwise = True
-        
-        print('Index {} Sperm_id  {} is rotating clockwise: {}'.format(sp, sperm_id,is_trajectory_clockwise))
+        print(f"Index {sp} Sperm_id  {sperm_id} is rotating clockwise: {is_trajectory_clockwise}")
         if (not is_trajectory_clockwise):
-            head_spin_angle = -head_spin_angle
+            head_spin_angle_cummulative = -head_spin_angle_cummulative
         
-        for i in range(0,X.shape[1]):
-            tp = time_points[i]
-            current_head_spin_angle_rad = np.deg2rad(head_spin_angle[i])
+        for i in range(0,X_neck.shape[1]):
+            tp = time_points[0,i]
+            current_head_spin_angle_rad = np.deg2rad(head_spin_angle_cummulative[i])
             
-            #swc trace from Hermes
-            x = X[:,i].reshape((-1, 1))
-            y = Y[:,i].reshape((-1, 1))
-            z = Z[:,i].reshape((-1, 1))
-            ids = np.arange(1, len(x)+1, 1).transpose().reshape((-1, 1))
-            parents = ids-1
-            parents[0] = -1
+            points = np.column_stack((X_neck[:,i], X_neck[:,i], X_neck[:,i]))
             
-            swc_trace = np.hstack((ids, 0*ids, x, y, z, 0*ids, parents))  
+            swc_trace = points_to_swc(points) 
         
             
             # print(flagellum_direction)
             for ind in range(0,swc_trace.shape[0]):
-                swc_trace[ind,2:5] = data_module.rodrigues_rotation(swc_trace[ind,2:5],np.array([1,0,0]),   -current_head_spin_angle_rad)
+                swc_trace[ind,2:5] = rodrigues_rotation(swc_trace[ind,2:5],np.array([1,0,0]),   -current_head_spin_angle_rad)
             
-            X[:,i] = swc_trace[:,2]
-            Y[:,i] = swc_trace[:,3]
-            Z[:,i] = swc_trace[:,4]
+            X_neck[:,i], Y_neck[:,i], Z_neck[:,i] = swc_trace[:,2], swc_trace[:,3], swc_trace[:,4]
             
             
-            util_vtk.swc_to_vtk_lines(file_output_data, sperm_id +'_'+data_module.tp2id(tp)+'.swc', swc_trace)               
-        variables_neck_frame['X'][0, sp] = X
-        variables_neck_frame['Y'][0, sp] = Y
-        variables_neck_frame['Z'][0, sp] = Z
-        
-    #my_dict = {"X": data['X'], "Y": data['Y'], "Z":data['Z']}
-    sio.savemat(Path(folder_output,  "03_Head_Fixed_Frame_Method_Rotations_Traces_raw_5_Microns_Difraction_head_spin.mat"), variables_neck_frame)
+            swc_to_vtk_lines(Path(folder_vtk_output, f"sperm_{sperm_id}_HeadFixedFrame{tp:04}.vtk"), swc_trace)               
+        variables_neck_frame['X'][0, sp] = X_neck
+        variables_neck_frame['Y'][0, sp] = Y_neck
+        variables_neck_frame['Z'][0, sp] = Z_neck
+    
+    variables_output = {"head_spin_angle": variables_neck_frame["head_spin_angle"],
+                        "head_spin_angle_cummulative": 0,
+                        "sperm_id": variables_neck_frame["sperm_id"],
+                        "sperm_tp_analized": variables_neck_frame["sperm_tp_analized"],
+                        "X": variables_neck_frame["X"],
+                        "Y": variables_neck_frame["Y"],
+                        "Z": variables_neck_frame["Z"],
+        }
+    sio.savemat(Path(folder_root,  file_head_frame_output_name), variables_output)
     
 def get_sperm_trayectory_direction(X,Y,Z):
     flagellum_dir_track = np.empty((0,3))
     trayectory_track = np.empty((0,3))
-    for i in range(0,X.shape[1]):
+    for i in range(X.shape[1]):
         
-        x = X[:,i].reshape((-1, 1))
-        y = Y[:,i].reshape((-1, 1))
-        z = Z[:,i].reshape((-1, 1))
-        ids = np.arange(0, len(x), 1).transpose().reshape((-1, 1))
-        parents = ids-1
-        parents[0] = -1
-        
-        swc_trace = np.hstack((ids, 0*ids, x, y, z, 0*ids, ids-1))
+        points = np.column_stack((X[:, i], Y[:, i], Z[:, i]))
+        swc_trace = points_to_swc(points) 
         
         #approximate flagellum direction
         current_direction = swc_trace[0,2:5]-get_point_reference(swc_trace[:,2:5], 10)
@@ -152,6 +153,30 @@ def get_point_reference(points, distance_ref):
     ind = np.argmax(cumulative_dist>distance_ref)
     
     return (points[ind,:])
+
+def convert_head_spin_from_range_0_90_to_full_rotations_0_360(head_spin_0_90):
+    ind_0 = np.where(head_spin_0_90 == 0)[0]
+    ind_90 = np.where(head_spin_0_90 == 90)[0]
+    ind_0 = ind_0[0] if np.array(ind_0).size > 0 else np.inf
+    ind_90 = ind_90[0] if np.array(ind_90).size > 0 else np.inf
+    
+    if ind_90 < ind_0:
+        t_orientation = head_spin_0_90[:ind_90]
+        t_orientation[t_orientation < 0] = np.finfo(float).eps
+        head_spin_0_90[:ind_90] = t_orientation
+        
+        cummulative_orientation = np.cumsum(np.abs(np.diff(np.concatenate(([0], head_spin_0_90)))))
+        
+    else:
+        # decreasing values scenario
+        t_orientation = head_spin_0_90[:ind_0]
+        t_orientation[t_orientation > 90] = 90 - np.finfo(float).eps
+        head_spin_0_90[:ind_0] = t_orientation
+
+        cummulative_orientation = np.cumsum(np.abs(np.diff(np.concatenate(([90], head_spin_0_90))))) + 90
+        
+    return cummulative_orientation
+    
     
 if __name__ == "__main__":
    main(sys.argv[1:])
