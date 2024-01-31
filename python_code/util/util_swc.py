@@ -78,3 +78,13 @@ def swc_to_micron(file_swc, file_txt, file_output = ""):
         write_swc(output_path, swc)      
     
     return swc
+
+def swc_extract_trace_until_distance(swc, distance_threshold):
+    distances = np.sqrt(np.sum(np.diff(swc[:, 2:5], axis=0) ** 2, axis=1))
+    cumulative_distances = np.cumsum(distances)
+    index_threshold = np.argmax(cumulative_distances > distance_threshold)
+    
+    # Extracting trace up to the specified distance
+    swc = swc[:index_threshold, :]
+    
+    return swc
