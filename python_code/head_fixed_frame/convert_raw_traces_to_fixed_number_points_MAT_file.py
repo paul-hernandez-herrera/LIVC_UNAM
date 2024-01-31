@@ -3,7 +3,7 @@ import os
 import scipy.io as sio
 from util.util_swc import interpolate_swc
 from util.util_vtk import swc_to_vtk_lines
-from util.basic_func import create_cell_array, create_file_in_case_not_exist
+from util.basic_func import create_cell_array, create_folder_in_case_not_exist
 import numpy as np 
 
 # set current folder as the working directory
@@ -29,9 +29,9 @@ traces, tp, sperm_id, head_spin_angle = (
 # Create output folders if writing VTK files
 if flag_write_vtk:
     folder_vtk_output = Path(folder_path, "vtk")
-    create_file_in_case_not_exist(folder_vtk_output)
+    create_folder_in_case_not_exist(folder_vtk_output)
     for n_exp in range(sperm_id.shape[1]):
-        create_file_in_case_not_exist( Path(folder_vtk_output, sperm_id[0, n_exp][0]) )     
+        create_folder_in_case_not_exist( Path(folder_vtk_output, sperm_id[0, n_exp][0]) )     
 
 # Creating variables to save generated data
 X, Y, Z = (
