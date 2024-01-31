@@ -4,17 +4,18 @@ Created on Wed Apr 21 20:15:12 2021
 
 @author: paul
 """
-import os, sys
-import scipy.io as sio
-import numpy as np
+import os
 from pathlib import Path
-from util.basic_func import create_folder_in_case_not_exist, points_get_PCA_components, rodrigues_rotation
-from util.util_swc import points_to_swc, swc_extract_trace_until_distance
-from util.util_vtk import swc_to_vtk_lines
-
 # set current folder as the working directory
 workbook_dir = os.path.dirname(Path(__file__).parent.resolve())
 os.chdir(workbook_dir)
+
+import  sys
+import scipy.io as sio
+import numpy as np
+from util.basic_func import create_folder_in_case_not_exist, points_get_PCA_components, rodrigues_rotation
+from util.util_swc import points_to_swc, swc_extract_trace_until_distance
+from util.util_vtk import swc_to_vtk_lines
 
 
 def main(argv):
