@@ -30,7 +30,7 @@ def main(argv):
     # here we read all the dataset information
     folder_path = r"C:\Users\jalip\Documentos\Proyectos\Sperm\Campo_claro\HIGH_VISCOCITY\data_traces"
     file_lab_input_name = "01_Lab_Frame_High_Viscocity_raw_fixed_n_points.mat"
-    file_neck_output_name = "02_Neck_Frame_High_Viscocity_raw_fixed_n_points.mat"    
+    file_neck_output_name = f"02_Neck_Frame_High_Viscocity_raw_fixed_n_points_{flagellum_dist_micras}_um.mat"     
     
     folder_root_vtk_output = Path(folder_path, "02_Neck_Frame")
     create_folder_in_case_not_exist(folder_root_vtk_output)            
@@ -48,7 +48,7 @@ def main(argv):
         
         for i in range(0,variables['X'][0, sp].shape[1]):
             
-            tp = time_points[i]
+            tp = time_points[0,i]
             
             points = np.column_stack((variables['X'][0, sp][:, i], variables['Y'][0, sp][:, i], variables['Z'][0, sp][:, i]))
             
@@ -64,8 +64,7 @@ def main(argv):
             variables['X'][0, sp][:, i] = swc_trace_translated[:, 2]
             variables['Y'][0, sp][:, i] = swc_trace_translated[:, 3]
             variables['Z'][0, sp][:, i] = swc_trace_translated[:, 4]
-            
-            
+
             swc_to_vtk_lines(Path(folder_vtk_output, f"sperm_{sperm_id}_Raw_{tp:04}.vtk"), swc_trace)
             swc_to_vtk_lines(Path(folder_vtk_output, f"sperm_{sperm_id}_NeckFrame{tp:04}.vtk"), swc_trace_translated)
 
@@ -82,7 +81,8 @@ def get_flagellum_direction_SphericaCoordinates(swc_head_removed, X_Micras):
     # https://www.mathworks.com/help/phased/ug/spherical-coordinates.html
     #swc_head_removed: file containing the information of the trace with the head centerline points removed
     #X_Micras: center-line length from neckpoint to be used to compute flagellum direction
-       
+    swc_head_removed = swc_head_removed.copy()
+    
     # Translate trace to the origin
     swc_head_removed[:, 2:5] = swc_head_removed[:, 2:5] - swc_head_removed[0, 2:5]
     
