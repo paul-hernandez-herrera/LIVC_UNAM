@@ -14,39 +14,12 @@ import sys
 
 
 def main(argv):
-    flagellum_dist_micras = 5
     
-    
-    #FILES NECK FRAME REFERENCE
-    
-    #SMOOTH SPLINES
-    #file_labFrame = r'C:\Users\jalip\Documents\Proyectos\Sperm\Capacitados\Mat_File\Smooth_spline_p_0_0001/Capacitados_01_LabFrameReference_smoothSpline_p_0_0001.mat'
-    
-    #file_name_mat = 'Capacitados_02_NeckFrameReference_smoothSpline_p_0_0001'
-    #file_neck_frame = r'C:\Users\jalip\Documents\Proyectos\Sperm\Capacitados\Mat_File\Smooth_spline_p_0_0001\\' + file_name_mat + '.mat'
-    #folder_output = r'C:\Users\jalip\Documents\Proyectos\Sperm\Capacitados\Mat_File\Smooth_spline_p_0_0001\Head_Fixed_Frame_Method_Rotations_Traces_SmoothSpline_p_0_0001_' +  str(flagellum_dist_micras) + '_Microns_Rot_HeadSize'    
-
-
-    
-    file_labFrame = r'C:\Users\jalip\Documents\Proyectos\Sperm\Capacitados\Mat_File/Capacitados_01_LabFrameReference_raw.mat'
-
-    file_name_mat = 'Capacitados_02_NeckFrameReference_raw'
-    file_neck_frame = r'C:\Users\jalip\Documents\Proyectos\Sperm\Capacitados\Mat_File\\' + file_name_mat + '.mat'
-    folder_output = r'C:\Users\jalip\Documents\Proyectos\Sperm\Capacitados\Mat_File\Head_Fixed_Frame_Method_Rotations_Traces_raw_' +  str(flagellum_dist_micras) + '_Microns_Difraction_head_spin'    
-    
-    #SPHERE ATTACHED_FLAGELLUM5
-    #file_labFrame = r'C:\Users\jalip\Documents\Proyectos\Sperm\campo_claro_traces\Sphere_attached_to_flagellum\Sp_B001___trace_head_removed/Sphere_Attached_01_LabFrameReference_raw.mat'
-    
-    #file_name_mat = 'Sphere_Attached_02_NeckFrameReference_raw'
-    #file_neck_frame = r'C:\Users\jalip\Documents\Proyectos\Sperm\campo_claro_traces\Sphere_attached_to_flagellum\Sp_B001___trace_head_removed\\' + file_name_mat + '.mat'
-    #folder_output = r'C:\Users\jalip\Documents\Proyectos\Sperm\campo_claro_traces\Sphere_attached_to_flagellum\Sp_B001___trace_head_removed\Head_Fixed_Frame_Method_Rotations_Traces_SmoothSpline_p_0_0001_' +  str(flagellum_dist_micras) + '_Microns_Rot_HeadSize'       
-    
-    
-    #Corrected microscope inversion
-    file_labFrame = r'C:\Users\jalip\Documents\Proyectos\Sperm\Hermes_datos\Data\FIXED_AXIS\Lab_Frame_traces_ScienceAdvance_raw.mat'
-    file_name_mat = 'neck_frame_traces_ScienceAdvance_raw_data_coordinates'
-    file_neck_frame = r'C:\Users\jalip\Documents\Proyectos\Sperm\Hermes_datos\Data\FIXED_AXIS\\' + file_name_mat + '.mat'
-    folder_output = r'C:\Users\jalip\Documents\Proyectos\Sperm\Hermes_datos\Data\FIXED_AXIS\Head_Fixed_Frame_Method_Rotations_Traces_raw_' +  str(flagellum_dist_micras) + '_Microns_Difraction_head_spin'    
+    # Input for dataset HIGH_VISCOCITY
+    folder_root = r"C:\Users\jalip\Documentos\Proyectos\Sperm\Campo_claro\HIGH_VISCOCITY\data_traces"
+    file_labFrame = Path(folder_root, "01_Lab_Frame_High_Viscocity_raw_fixed_n_points.mat")
+    file_neck_frame = Path(folder_root, r"02_Neck_Frame_High_Viscocity_raw_fixed_n_points_5_um.mat")
+    folder_output = Path(folder_root, "03_Head_Fixed_Frame_High_Viscocity_raw_fixed_n_points_head_spin_by_drifraction.mat")
     
     
     #loading data from mat file
