@@ -28,7 +28,7 @@ traces, tp, sperm_id, head_spin_angle = (
 
 # Create output folders if writing VTK files
 if flag_write_vtk:
-    folder_vtk_output = Path(folder_path, "vtk")
+    folder_vtk_output = Path(folder_path, "01_Lab_Frame")
     create_folder_in_case_not_exist(folder_vtk_output)
     for n_exp in range(sperm_id.shape[1]):
         create_folder_in_case_not_exist( Path(folder_vtk_output, sperm_id[0, n_exp][0]) )     
@@ -56,7 +56,6 @@ for n_exp in range(traces.shape[1]):
         current_z[:,i] = new_swc[:,4]
         
         if flag_write_vtk:
-            swc_to_vtk_lines(Path(folder_vtk_output, sperm_id[0,n_exp][0], f"raw_{tp[0,n_exp][0,i]:04}.vtk"), swc)
             swc_to_vtk_lines(Path(folder_vtk_output, sperm_id[0,n_exp][0], f"raw_fixed_n_points_{tp[0,n_exp][0,i]:04}.vtk"), new_swc)
     X[0, n_exp], Y[0, n_exp], Z[0, n_exp] = current_x, current_y, current_z
             
