@@ -76,60 +76,7 @@ def main(argv):
                         "Y": variables["Y"],
                         "Z": variables["Z"],
         }      
-    sio.savemat(Path(folder_path, file_neck_output_name), variables_output)
-    
-def get_sperm_trayectory_direction(time_points,X,Y,Z):
-    flagellum_dir_track = np.empty((0,3))
-    trayectory_track = np.empty((0,3))
-    for i in range(0,len(time_points)):
-        x = X[:,i].reshape((-1, 1))
-        y = Y[:,i].reshape((-1, 1))
-        z = Z[:,i].reshape((-1, 1))
-        ids = np.arange(0, len(x), 1).transpose().reshape((-1, 1))
-        parents = ids-1
-        parents[0] = -1
-        
-        swc_trace = np.hstack((ids, 0*ids, x, y, z, 0*ids, ids-1))
-        
-        #approximate flagellum direction
-        current_direction = swc_trace[0,2:5]-get_point_reference(swc_trace[:,2:5], 10)
-        current_direction = current_direction/np.linalg.norm(current_direction)
-        
-        flagellum_dir_track = np.vstack((flagellum_dir_track,current_direction))        
-        trayectory_track = np.vstack((trayectory_track, get_point_reference(swc_trace[:,2:5], 8) ))
-    
-    mean_flagellum_dir = np.mean(flagellum_dir_track,axis=0)    
-    normal_vector_normalized = mean_flagellum_dir/np.linalg.norm(mean_flagellum_dir)
-    
-    trayectory_track_traslated = trayectory_track-np.mean(trayectory_track,axis=0)
-    
-    #projecting the vector in the plane with point at the origin at normal vector defined by mean_flagellum_direction
-    #https://www.maplesoft.com/support/help/Maple/view.aspx?path=MathApps%2FProjectionOfVectorOntoPlane
-    for i in range(0,trayectory_track_traslated.shape[0]):
-        magnitud_ = np.dot(trayectory_track_traslated[i,:],normal_vector_normalized)
-        trayectory_track_traslated[i,:] = trayectory_track_traslated[i,:] - magnitud_*normal_vector_normalized
-    
-    n_direction_clockwise=0
-    n_total_points = 0
-    
-    #computing for each point if it is clockwise direction
-    for i in range(2,trayectory_track_traslated.shape[0]):
-        vec1 = trayectory_track_traslated[i-2,:] - trayectory_track_traslated[i-1,:] 
-        vec2 = trayectory_track_traslated[i,:] - trayectory_track_traslated[i-1,:]
-        
-        val_dir = np.dot(np.cross(vec1,vec2),normal_vector_normalized)
-        
-        if val_dir>0:
-            n_direction_clockwise+=1
-            
-        n_total_points+=1
-        
-    clockwise = False
-    
-    if (n_direction_clockwise/n_total_points)>0.5:
-        clockwise = True
-    return (clockwise)
-        
+    sio.savemat(Path(folder_path, file_neck_output_name), variables_output)        
     
 def get_flagellum_direction_SphericaCoordinates(swc_head_removed, X_Micras):  
     # https://www.mathworks.com/help/phased/ug/spherical-coordinates.html
