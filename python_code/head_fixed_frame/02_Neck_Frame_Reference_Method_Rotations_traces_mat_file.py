@@ -32,7 +32,7 @@ def main(argv):
     file_lab_input_name = "01_Lab_Frame_High_Viscocity_raw_fixed_n_points.mat"
     file_neck_output_name = f"02_Neck_Frame_High_Viscocity_raw_fixed_n_points_{flagellum_dist_micras}_um.mat"     
     
-    folder_root_vtk_output = Path(folder_path, "02_Neck_Frame")
+    folder_root_vtk_output = Path(folder_path, f"02_Neck_Frame_{flagellum_dist_micras}_um")
     create_folder_in_case_not_exist(folder_root_vtk_output)            
     
     #input data from mat file
@@ -65,7 +65,6 @@ def main(argv):
             variables['Y'][0, sp][:, i] = swc_trace_translated[:, 3]
             variables['Z'][0, sp][:, i] = swc_trace_translated[:, 4]
 
-            swc_to_vtk_lines(Path(folder_vtk_output, f"sperm_{sperm_id}_Raw_{tp:04}.vtk"), swc_trace)
             swc_to_vtk_lines(Path(folder_vtk_output, f"sperm_{sperm_id}_NeckFrame{tp:04}.vtk"), swc_trace_translated)
 
     variables_output = {"head_spin_angle": variables["head_spin_angle"],
@@ -96,7 +95,10 @@ def get_flagellum_direction_SphericaCoordinates(swc_head_removed, X_Micras):
     flagellum_dir_pca = pca_flagellum[0,:]
     
     # Make sure that the eigenvector points from the first to the last point
-    angle_vectors_rad = np.arccos(np.dot(dir_aprox,flagellum_dir_pca)/(np.linalg.norm(dir_aprox)*np.linalg.norm(flagellum_dir_pca)))
+    cosine_angle = np.dot(dir_aprox,flagellum_dir_pca)/(np.linalg.norm(dir_aprox)*np.linalg.norm(flagellum_dir_pca))
+    cosine_angle = np.clip(cosine_angle, -1.0, 1.0)
+    angle_vectors_rad = np.arccos(cosine_angle)
+        
     
     if np.absolute(angle_vectors_rad)>(45*np.pi/180):
         # Eigenvector in the direction contrary to the flagellum orientation
