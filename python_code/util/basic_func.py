@@ -3,6 +3,7 @@ from pathlib import Path
 import skimage.io as io
 import pandas as pd
 import numpy as np
+from sklearn.decomposition import PCA
 
 def cummulative_euclidian_distance_between_points(points):
     # we assume that coordinates of points are given in the rows
@@ -33,7 +34,7 @@ def write_csv(file_name, array):
     df = pd.DataFrame(array)
     df.to_csv(file_name, index=False, header = None)
     
-def create_file_in_case_not_exist(folder_path):
+def create_folder_in_case_not_exist(folder_path):
     Path(folder_path).mkdir(parents=True, exist_ok=True)
     return
 
@@ -44,6 +45,21 @@ def create_cell_array(shape):
     temp = []
     cell_array = np.array([temp.append([]) for _ in range(n_entries)], dtype=object).reshape(shape)
     return cell_array
+
+def points_get_PCA_components(X):
+    pca = PCA();
+    pca.fit(X)
+    return(pca.components_)
+
+def rodrigues_rotation(v, k, theta):
+    # https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+    k = k/np.linalg.norm(k)
+    
+    v = np.array(v)
+    
+    v_rot = (v*np.cos(theta)) + (np.cross(k,v)*np.sin(theta)) + (k*(np.dot(k,v)*(1.0-np.cos(theta))))
+            
+    return(v_rot)
         
 
 
