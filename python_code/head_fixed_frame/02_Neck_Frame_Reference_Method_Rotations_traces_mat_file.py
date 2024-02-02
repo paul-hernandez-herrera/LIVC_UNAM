@@ -25,7 +25,7 @@ def main(argv):
     # sperm_timePointsAnalyzed cell with size n (every entry represents a sperm), contain information of the time points analyzed
     # sperm_id cell with size n (every entry represents a sperm), to identify the date that the sperm was adquired and experiment id
     
-    flagellum_dist_micras = 5
+    flagellum_dist_micras = 10
     
     
     # here we read all the dataset information
