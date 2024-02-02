@@ -13,11 +13,13 @@ os.chdir(workbook_dir)
 
 import scipy.io as sio
 import numpy as np
-from util.basic_func import create_folder_in_case_not_exist, rodrigues_rotation
+from util.basic_func import create_folder_in_case_not_exist, rodrigues_rotation, write_csv
 from util.util_vtk import swc_to_vtk_lines
 from pathlib import Path
 import sys
 from util.util_swc import points_to_swc
+
+flag_automatic_head_spin_rotation = False
 
 
 def main(argv):
@@ -25,7 +27,7 @@ def main(argv):
     # Input for dataset HIGH_VISCOCITY
     folder_root = r"C:\Users\jalip\Documentos\Proyectos\Sperm\Campo_claro\HIGH_VISCOCITY\data_traces"
     file_labFrame = Path(folder_root, "01_Lab_Frame_High_Viscocity_raw_fixed_n_points.mat")
-    file_neck_frame = Path(folder_root, r"02_Neck_Frame_High_Viscocity_raw_fixed_n_points_5_um.mat")
+    file_neck_frame = Path(folder_root, "02_Neck_Frame_High_Viscocity_raw_fixed_n_points_10_um.mat")
     file_head_frame_output_name = Path(folder_root, "03_Head_Fixed_Frame_High_Viscocity_raw_fixed_n_points_head_spin_by_drifraction.mat")
     
     # Create folder to save vtk files    
@@ -38,8 +40,7 @@ def main(argv):
     
     variables_neck_frame["head_spin_angle_cummulative"] = variables_neck_frame['head_spin_angle'].copy()
     for sp in range(variables_neck_frame['X'].shape[1]):
-        sperm_id = variables_neck_frame['sperm_id'][0,sp][0]
-        print(f"Running Sperm_id  {sperm_id}")        
+        sperm_id = variables_neck_frame['sperm_id'][0,sp][0]       
         folder_vtk_output = Path(folder_root_vtk_output, sperm_id)
         create_folder_in_case_not_exist(folder_vtk_output)
         
@@ -53,14 +54,20 @@ def main(argv):
         head_spin_angle_cummulative = convert_head_spin_from_range_0_90_to_full_rotations_0_360(head_spin_angle)
         variables_neck_frame['head_spin_angle_cummulative'][0, sp][0,:] = head_spin_angle_cummulative
         
-        # Reading Lab Frame to Detect Spin Rotation        
-        X_lab = variables_lab_frame['X'][0, sp]
-        Y_lab = variables_lab_frame['Y'][0, sp]
-        Z_lab = variables_lab_frame['Z'][0, sp]    
+        if flag_automatic_head_spin_rotation:
+            # Reading Lab Frame to Detect Spin Rotation        
+            X_lab = variables_lab_frame['X'][0, sp]
+            Y_lab = variables_lab_frame['Y'][0, sp]
+            Z_lab = variables_lab_frame['Z'][0, sp]    
+            
+            is_trajectory_clockwise, trayectory_track_traslated = get_sperm_trayectory_direction(X_lab,Y_lab,Z_lab)
+        else:
+            # assuming that sperm spin counter_clock_wise. Read following paper
+            # https://journals.biologists.com/jcs/article/136/22/jcs261306/335727
+            is_trajectory_clockwise = False
         
-        
-        is_trajectory_clockwise = get_sperm_trayectory_direction(X_lab,Y_lab,Z_lab)
-        print(f"Index {sp} Sperm_id  {sperm_id} is rotating clockwise: {is_trajectory_clockwise}")
+        write_csv(Path(folder_root_vtk_output, sperm_id + ".csv"), head_spin_angle_cummulative)
+        print(f"Sp_id={sperm_id}. Rotating clockwise: {is_trajectory_clockwise}\n-------")
         if (not is_trajectory_clockwise):
             head_spin_angle_cummulative = -head_spin_angle_cummulative
         
@@ -68,7 +75,7 @@ def main(argv):
             tp = time_points[0,i]
             current_head_spin_angle_rad = np.deg2rad(head_spin_angle_cummulative[i])
             
-            points = np.column_stack((X_neck[:,i], X_neck[:,i], X_neck[:,i]))
+            points = np.column_stack((X_neck[:,i], Y_neck[:,i], Z_neck[:,i]))
             
             swc_trace = points_to_swc(points) 
         
@@ -104,13 +111,13 @@ def get_sperm_trayectory_direction(X,Y,Z):
         swc_trace = points_to_swc(points) 
         
         #approximate flagellum direction
-        current_direction = swc_trace[0,2:5]-get_point_reference(swc_trace[:,2:5], 10)
+        current_direction = swc_trace[0,2:5]-get_point_reference(swc_trace[:,2:5], 5)
         current_direction = current_direction/np.linalg.norm(current_direction)
         
         flagellum_dir_track = np.vstack((flagellum_dir_track,current_direction))        
-        trayectory_track = np.vstack((trayectory_track, get_point_reference(swc_trace[:,2:5], 15) ))
+        trayectory_track = np.vstack((trayectory_track, get_point_reference(swc_trace[:,2:5], 35) ))
     
-    mean_flagellum_dir = np.mean(flagellum_dir_track,axis=0)    
+    mean_flagellum_dir = np.mean(flagellum_dir_track,axis=0)
     normal_vector_normalized = mean_flagellum_dir/np.linalg.norm(mean_flagellum_dir)
     
     trayectory_track_traslated = trayectory_track-np.mean(trayectory_track,axis=0)
@@ -118,7 +125,7 @@ def get_sperm_trayectory_direction(X,Y,Z):
     #projecting the vector in the plane with point at the origin at normal vector defined by mean_flagellum_direction
     #https://www.maplesoft.com/support/help/Maple/view.aspx?path=MathApps%2FProjectionOfVectorOntoPlane
     for i in range(0,trayectory_track_traslated.shape[0]):
-        magnitud_ = np.dot(trayectory_track_traslated[i,:],normal_vector_normalized)
+        magnitud_ = np.dot(trayectory_track_traslated[i,:], normal_vector_normalized)
         trayectory_track_traslated[i,:] = trayectory_track_traslated[i,:] - magnitud_*normal_vector_normalized
     
     n_direction_clockwise=0
@@ -138,11 +145,11 @@ def get_sperm_trayectory_direction(X,Y,Z):
         
     clockwise = False
     
-    print((n_direction_clockwise/n_total_points))
-    
-    if (n_direction_clockwise/n_total_points)>0.5:
+    clockwise_measure = n_direction_clockwise/n_total_points
+    print(clockwise_measure)
+    if clockwise_measure>0.5:
         clockwise = True
-    return (clockwise)
+    return clockwise, np.vstack((normal_vector_normalized,trayectory_track_traslated))
         
     
         
