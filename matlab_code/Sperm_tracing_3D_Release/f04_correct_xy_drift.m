@@ -6,10 +6,10 @@ function f04_correct_xy_drift()
     addpath('C:\Users\paulh\Documents\Software\Fiji.app\scripts'); 
     
     
-    folder_path = 'E:\SPERM\Fluorescencia_Campo_Claro\20241203 CC 4000fps Fluo8 4000fps 90hz 20 micras\STACKS\Exp2_stacks';
-    stack_name_prefix = 'Exp2_stacks'; 
-    threshold_head = 100;
-    seed_point_head = [437 328 20];
+    folder_path = 'E:\SPERM\Fluorescencia_Campo_Claro\20241210 CC 4000fps Calceina y Fluo 4000fps - 90hz 20 micras\STACKS\Exp7_stacks';
+    stack_name_prefix = 'Exp7_stacks'; 
+    threshold_head = 140;
+    seed_point_head = [543 171 11];
     TP_initial = 1;
     
     zVal_ref = get_zVal_ref(folder_path, stack_name_prefix);
@@ -32,20 +32,27 @@ function f04_correct_xy_drift()
             x_head = seed_point_head(1);
             y_head = seed_point_head(2);
 
-            window_size = 50;
+            window_size = 70;
             
             % Coordenadas ajustadas al tamaño del volumen
             x_min = max(1, x_head - window_size);
             y_min = max(1, y_head - window_size);
             x_max = min(size(V, 1), x_head + window_size);
             y_max = min(size(V, 2), y_head + window_size);
+            
+            % Fix not uniform illumination
+            V_Cor_illum = single(V) - imclose(imopen(single(V),ones(10,10,1)),ones(20,20,1)); 
+
+            h = fspecial('average', [5, 5]);
+            for i =[1:size(V,3)]
+                V_Cor_illum(:,:,i)=imfilter(V_Cor_illum(:,:,i), h);
+            end
 
             %setting a new volume to keep the cropped volume. Center of the volume
-            cropped_head = single(V(x_min:x_max,y_min:y_max,:));
+            cropped_head = single(V_Cor_illum(x_min:x_max,y_min:y_max,:));
 
             mean_val = mean(cropped_head(:));
             cropped_head = abs(cropped_head-mean_val);
-
             cropped_head = normalizeVol(cropped_head,0,255);
 
 
