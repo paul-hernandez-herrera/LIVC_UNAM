@@ -12,7 +12,7 @@ def read_swc(file_path,file_name):
     # Check if the shape of the array is not [n, 7]
     if swc.shape[1]!=7:
         # If unsuccessful, attempt to read the CSV file with custom settings
-        swc = pd.read_csv(full_path , header = None, comment='#', delim_whitespace = True).values
+        swc = pd.read_csv(full_path , header = None, comment='#', sep=r'\s+').values
         
         # Check if the shape is still not [n, 7]
         if swc.shape[1]!=7:
