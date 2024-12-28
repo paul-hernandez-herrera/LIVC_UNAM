@@ -13,10 +13,20 @@ def cummulative_euclidian_distance_between_points(points):
     return cum_dist
 
 def imread(filename):
-    if Path(filename).suffix.lower() in {'.tif', '.tiff'}:
-        return tifffile.imread(filename)
-    if Path(filename).suffix.lower() in {'.mhd'}:
-        return io.imread(filename, plugin='simpleitk')
+    file_name = Path(filename)
+    valid_suffixes = {'.tif', '.tiff', '.mhd'}
+    
+    if file_name.suffix.lower() not in valid_suffixes:
+        for suffix in ['.mhd', '.tif', '.tiff']:
+            if file_name.with_suffix(suffix).exists():
+                file_name = file_name.with_suffix(suffix)
+                break
+    
+    suffix = file_name.suffix.lower()
+    if suffix in {'.tif', '.tiff'}:
+        return tifffile.imread(file_name)
+    elif suffix == '.mhd':
+        return read_mhd_and_raw(file_name)
         
 def imwrite(filename, arr):
     if Path(filename).suffix.lower() in {'.tif', '.tiff'}:
@@ -61,6 +71,53 @@ def rodrigues_rotation(v, k, theta):
             
     return(v_rot)
         
+def read_mhd_and_raw(mhd_file):
+    """
+    Lee un stack 3D desde archivos MHD y RAW.
 
+    Parameters:
+        mhd_file (str): Ruta al archivo .mhd.
+
+    Returns:
+        numpy.ndarray: Volumen 3D cargado.
+    """
+    
+    mhd_file = Path(mhd_file)
+    # Leer metadatos del archivo .mhd
+    header = {}
+    with open(mhd_file, 'r') as f:
+        for line in f:
+            parts = line.strip().split(' = ')
+            if len(parts) == 2:
+                key, value = parts
+                header[key.strip()] = value.strip()
+    
+    # Extraer información relevante
+    raw_file = header.get('ElementDataFile')  # Nombre del archivo .raw
+    dim_size = list(map(int, header['DimSize'].split()))  # Tamaño del volumen
+    element_type = header['ElementType']  # Tipo de dato
+    element_spacing = list(map(float, header['ElementSpacing'].split()))  # Espaciado
+    
+    # Mapear el tipo de dato de MetaImage a NumPy
+    type_mapping = {
+        'MET_UCHAR': np.uint8,
+        'MET_CHAR': np.int8,
+        'MET_USHORT': np.uint16,
+        'MET_SHORT': np.int16,
+        'MET_UINT': np.uint32,
+        'MET_INT': np.int32,
+        'MET_FLOAT': np.float32,
+        'MET_DOUBLE': np.float64,
+    }
+    
+    dtype = type_mapping.get(element_type)
+    if dtype is None:
+        raise ValueError(f"Tipo de elemento no soportado: {element_type}")
+    
+    # Leer el archivo .raw
+    raw_file_path = Path(mhd_file.parent,mhd_file.stem + ".raw")  # Asumimos que .raw está junto al .mhd
+    volume = np.fromfile(raw_file_path, dtype=dtype).reshape(dim_size[::-1])
+    
+    return volume
 
 
