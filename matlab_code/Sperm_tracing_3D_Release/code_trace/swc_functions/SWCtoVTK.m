@@ -27,7 +27,7 @@ CONNECTIONS = CONNECTIONS-1;
 %Adding the required value of the number of conection 
 CONNECTIONS = [2*ones(size(CONNECTIONS,1),1) CONNECTIONS];
 
-fid = fopen([path_to_file '.vtk'],'w');
+fid = fopen(strcat(path_to_file, '.vtk'),'w');
 fprintf(fid,'# vtk DataFile Version 2.0\n');
 fprintf(fid,'# ORIGINAL_SOURCE: Computational Biomedical Lab (CBL)\n');
 fprintf(fid,'ASCII\n');
