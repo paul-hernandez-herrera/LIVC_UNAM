@@ -67,7 +67,10 @@ class construct_training_set():
             for trace_file in Path(trace_folder).iterdir():
                 if trace_file.suffix == '.swc':  # Considerar solo archivos .swc
                     # Construir las rutas completas del trazado y su imagen asociada
-                    image_path = Path(image_folder, trace_file.stem + ".mhd")
+                    if trace_file.stem[-12::]=='_LogN_rec_FM':
+                        image_path = Path(image_folder, trace_file.stem[:-12:] + ".mhd")
+                    else:
+                        image_path = Path(image_folder, trace_file.stem + ".mhd")
                     trace_path = Path(trace_folder, trace_file.name)
                     self.dataset.append([image_path, trace_path])  # Añadir al conjunto de datos
         
@@ -99,12 +102,26 @@ class construct_training_set():
             
             # Load the 3D image stack and SWC data
             img, swc = self.__get_data(files_path)
+            #SWC comes from matlab coordinates convert to python [0,0,0]
             
+            # Data before 2024 was adquired with fastest FPS. Reduce the size of stack            
+            # if img.shape[0]>35:
+            #     img = img[2::2,:,:]
+            #     swc[:,4] = (swc[:,4]+1)//2 
+            
+            #Check good boundary
+            for i, dim in enumerate([2, 3, 4]):
+                swc[swc[:, dim] < 1, dim] = 1
+                swc[swc[:, dim] > img.shape[4 - dim], dim] = img.shape[4 - dim]          
+            swc[:,2:5] = swc[:,2:5]-1 # Convert to Python 
+
+            
+                
             # Normalize the 3D image stack intensities to the range [-1, 1]
             img = preprocess.preprocess_3d_stack_for_AI_segmentation(img)
             
             # Generate the ground truth mask as a tubular structure
-            ground_truth_mask  = self.construct_tubular_mask(np.array(img.shape), swc, self.radius)
+            ground_truth_mask  = self.construct_tubular_mask(np.array(img.shape), swc.copy(), self.radius)
             
             
             # Optionally add a larger mask around the head region
@@ -115,16 +132,20 @@ class construct_training_set():
             
             # Generate training patches centered around flagellum positions
             flagellum_positions = np.random.choice(swc.shape[0], self.n_patch_foreground, replace=False)
-            flagellum_positions = np.append(flagellum_positions, [-1,-1,-1,-1,0])  # Include the flagellum tip and head
+            flagellum_positions = np.append(flagellum_positions, [0,-1])  # Include the flagellum tip and head
             for position_index  in flagellum_positions:
                 # Compute the upper-left corner of the patch
                 left_upper_corner = swc[position_index ,4:1:-1] - self.patch_size/2
                 
                 #random shift of the left-corner
-                left_upper_corner += np.random.randint(low=-np.array(self.patch_size) // 4, high=np.array(self.patch_size) // 4, size=3, dtype=int)
+                rand_pos = np.random.randint(low=-np.array(self.patch_size) // 4, high=np.array(self.patch_size) // 4, size=3, dtype=int)
+                left_upper_corner += rand_pos
                 
                 # Crop sub-volumes of the image and mask
                 img_cropped, mask_cropped = self.__crop_subvolumes(img, ground_truth_mask , left_upper_corner, self.patch_size)
+                
+                if img_cropped.shape[0]!=self.patch_size[0]:
+                    raise ValueError(f"Error when creating the shape of stack {files_path}\n")
                 
                 # Save the cropped image and mask
                 basic_func.imwrite(Path(output_folder_images, f"img_{image_counter:06}.tif"), img_cropped)
@@ -188,15 +209,14 @@ class construct_training_set():
         cylinder_mask = np.full(img_shape+2*r, False)
         
         sphere = self.__construct_sphere(r)
-        
-        #### We assume that coordinates are obtained with origin at [1,1,1]. Convertir to Python origin [0,0,0]
-        swc[:,2:5] = swc[:,2:5]-1 
-        
+
         for i in range(0, swc.shape[0]):
             #updating coordinates
             x, y, z = swc[i,2:5]
-            self.__merge_volumes(cylinder_mask, sphere, np.uint16(np.array([z,y,x])))
-            
+            try:
+                self.__merge_volumes(cylinder_mask, sphere, np.uint16(np.array([z,y,x])))
+            except:
+                print("Error")
         return np.uint8(cylinder_mask[r:r+img_shape[0],r:r+img_shape[1],r:r+img_shape[2]]>0)
     
     def __construct_sphere(self, r):
@@ -211,6 +231,7 @@ class construct_training_set():
     def __merge_volumes(self, large_vol, small_vol, ini_pos):
         #We assume that small_volume is inside large volume (It is satisfied by construction)
         large_vol[ini_pos[0]:ini_pos[0]+small_vol.shape[0], ini_pos[1]:ini_pos[1]+small_vol.shape[1], ini_pos[2]:ini_pos[2]+small_vol.shape[2]] =  large_vol[ini_pos[0]:ini_pos[0]+small_vol.shape[0], ini_pos[1]:ini_pos[1]+small_vol.shape[1], ini_pos[2]:ini_pos[2]+small_vol.shape[2]] | small_vol
+                
         return large_vol
     
     def __create_folder_if_not_exist(self, folder_path):
