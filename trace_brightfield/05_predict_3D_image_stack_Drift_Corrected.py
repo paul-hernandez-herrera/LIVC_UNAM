@@ -9,8 +9,8 @@ Parameters to predict the segmentation for 3D image stacks.
 '''
 model_path = r"E:\SPERM\Training_dataset\2024_12_30_flagellum_head_brightfield\modelo_2024_12_30\modelo_UNet_3D_epoch_00009.pth"
 
-folder_images = r"E:\SPERM\Fluorescencia_Campo_Claro\20241203 CC 4000fps Fluo8 4000fps 90hz 20 micras\STACKS\Exp17_stacks"
-file_prefix = "Exp17_stacks"
+folder_images = r"E:\SPERM\Fluorescencia_Campo_Claro\20241210 CC 4000fps Calceina y Fluo 4000fps - 90hz 20 micras\STACKS\Exp7_stacks"
+file_prefix = "Exp7_stacks"
 
 
 import os
@@ -42,7 +42,7 @@ def display_side_by_side_image(input_img, network_output, file_out):
     axes[1].set_title('Segmentation')
     
     plt.tight_layout()
-    plt.savefig(file_out, dpi=300, bbox_inches='tight') 
+    plt.savefig(file_out, bbox_inches='tight') 
     plt.close()
 
 '''
@@ -59,7 +59,7 @@ modelo1.load_state_dict(torch.load(model_path, weights_only=True))
 # modelo2 = UNet_3D().to(device) # Create the model
 # modelo2.load_state_dict(torch.load(model_path_2, weights_only=True))
 
-folder_img_output = Path(folder_images, "segmentation_png")
+folder_img_output = Path(folder_images, "segmentation_jpeg")
 folder_img_output.mkdir(parents=True, exist_ok=True)
 
 for timepoint in range(0,1000):
@@ -84,7 +84,7 @@ for timepoint in range(0,1000):
         
         basic_func.imwrite(Path(folder_images, file_output), network_output)
         
-        display_side_by_side_image(input_img, network_output, Path(folder_img_output, file_name + ".png"))
+        display_side_by_side_image(input_img, network_output, Path(folder_img_output, file_name + ".jpeg"))
     
 
 
