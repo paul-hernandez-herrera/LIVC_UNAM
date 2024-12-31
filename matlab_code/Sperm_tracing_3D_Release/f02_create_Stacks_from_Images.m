@@ -13,11 +13,11 @@ function f02_create_Stacks_from_Images()
     % conversion = 40; % Fecha Antes de 2024_11
     
 
-    folder_path =   'E:\SPERM\Fluorescencia_Campo_Claro\20241203 CC 4000fps Fluo8 4000fps 90hz 20 micras\Exp2';
-    image_prefix = 'Exp2_TP_';
-    folder_output = 'E:\SPERM\Fluorescencia_Campo_Claro\20241203 CC 4000fps Fluo8 4000fps 90hz 20 micras\Exp2_stacks';
+    folder_path =   'E:\SPERM\campo_claro\VERY_HIGH_VISCOCITY\171207 NAC Very High Viscosity 7 dic 2017\Exp 2\Exp 2';
+    image_prefix = 'Exp 2_';
+    folder_output = 'E:\SPERM\campo_claro\VERY_HIGH_VISCOCITY\171207 NAC Very High Viscosity 7 dic 2017\Exp 2\Exp2_stacks';
     stack_name_prefix = 'Exp2_stacks';
-    shift = -7; 
+    shift = -1; 
     
 
 
@@ -150,7 +150,7 @@ end
 
 function stack = read_camImage(index_,folder_path,file_ID)
     for i=1:length(index_)
-        ID = sprintf('%08d', i);                      
+        ID = sprintf('%08d', index_(i));                      
     %     ID = num2str(index_(i)); 
         I = imread(fullfile(folder_path,[file_ID  ID '.tif']))';
         if i==1
