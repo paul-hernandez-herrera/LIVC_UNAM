@@ -25,18 +25,32 @@ function [file_name ,seed_point_head]= extract_trace_from_segmentation(folder_pa
 
     % Segmentation correspond to probability values in range [0, 255].
     % Convert to binary mask
-    Segmentation = Segmentation > 100;
+    Segmentation = Segmentation > 75;
     
-    file_namePrev = [file_prefix '_TP' sprintf('%04d', time_point) '_DC_segmentation'];
-    if  exist(fullfile(folder_path,[file_namePrev '_LogN_rec_FM.swc']),'file')
+    file_namePrev = [file_prefix '_TP' sprintf('%04d', time_point-1) '_DC_segmentation'];
+    if  exist(fullfile(folder_traces_output,[file_namePrev '.swc']),'file')
         %taking previous seed point as a prior knowledgue to detect current seed point
-        SWC =readSWC(fullfile(folder_path,[file_namePrev '.swc']));
+        SWC =readSWC(fullfile(folder_traces_output,[file_namePrev '.swc']));
 
         seed_point = SWC(1,3:5)';
     end
     
     %get sperm's head position
     seed_point = getHeadPosition(Segmentation, seed_point);
+    if Segmentation(seed_point(1), seed_point(2), seed_point(3)) == 0
+        % Seed point is not in segmentation, adding a binary fake head with a spherical mask
+        I = zeros(size(Segmentation), 'uint8');
+        I(seed_point(1), seed_point(2), seed_point(3)) = 1;
+        
+        % Create a spherical structuring element
+        radius_sphere = 7; % Adjust radius as needed
+        [x, y, z] = ndgrid(-radius_sphere:radius_sphere, -radius_sphere:radius_sphere, -radius_sphere:radius_sphere);
+        sphereMask = sqrt(x.^2 + y.^2 + z.^2) <= radius_sphere;
+        
+        % Apply the spherical mask
+        I = imdilate(I, sphereMask);
+        Segmentation = Segmentation | I;
+    end
     % seed_point = [300 126 16]';
     seed_point_head = seed_point;
    
@@ -57,7 +71,6 @@ function [file_name ,seed_point_head]= extract_trace_from_segmentation(folder_pa
     [~,index] = max(S(:));
     [x,y,z] = ind2sub(size(S),index);
     end_points = [x,y,z]';
-    S(I)=inf;
 
     % extract centerline bu backpropagation 
     [a,~] = traceBack_centerline3D([], seed_point, end_points, fast_marching,[], folder_path, fast_marching_fileName); clear fast_marching S;
@@ -78,6 +91,7 @@ function [file_name ,seed_point_head]= extract_trace_from_segmentation(folder_pa
     figure;set(gcf,'Visible', 'off'); 
     imshow(max(Segmentation,[],3)',[]); colormap('gray');hold on;
     plot(trace_coordinates{1}(:,1),trace_coordinates{1}(:,2),'r', 'LineWidth',2);
+    plot(trace_coordinates{1}(1,1),trace_coordinates{1}(1,2),'b*', 'LineWidth',3);
 
     print(gcf,fullfile(folder_traces_output, [file_name '.png']),'-dpng')
     close all;
@@ -115,5 +129,7 @@ function headPos = getHeadPosition(B,seed_point)
         disp('Warning setting new head position as previous position')
         headPos = seed_point;
     end
-
+    if size(headPos,1)==1
+        headPos = headPos';
+    end
 end
